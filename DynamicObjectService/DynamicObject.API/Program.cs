@@ -15,27 +15,27 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-builder.Services.AddMassTransit(x =>
-{
-    x.AddConsumer<ObjectCreatedEventHandler>();
+//builder.Services.AddMassTransit(x =>
+//{
+//    x.AddConsumer<ObjectCreatedEventHandler>();
 
-    // Default Port: 5672
-    x.UsingRabbitMq((context, cfg) =>
-    {
-        cfg.Host(builder.Configuration["RabbitMQUrl"], "/", host =>
-        {
-            host.Username("guest");
-            host.Password("guest");
-        });
+//    // Default Port: 5672
+//    x.UsingRabbitMq((context, cfg) =>
+//    {
+//        cfg.Host(builder.Configuration["RabbitMQUrl"], "/", host =>
+//        {
+//            host.Username("guest");
+//            host.Password("guest");
+//        });
 
-        cfg.ReceiveEndpoint("object-created-event", e =>
-        {
-            e.ConfigureConsumer<ObjectCreatedEventHandler>(context);
-        });
-    });
-});
+//        cfg.ReceiveEndpoint("object-created-event", e =>
+//        {
+//            e.ConfigureConsumer<ObjectCreatedEventHandler>(context);
+//        });
+//    });
+//});
 
-builder.Services.AddMassTransitHostedService();
+//builder.Services.AddMassTransitHostedService();
 
 ServiceConfigurator.Configure(builder.Services);
 
@@ -48,6 +48,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(opt =>
 });
 
 var app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

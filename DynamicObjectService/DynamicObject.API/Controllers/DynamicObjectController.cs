@@ -1,70 +1,108 @@
-﻿using DynamicObject.API.EventBus.Events;
-using DynamicObject.API.Services;
+﻿using DynamicObject.API.Services;
 using DynamicObject.Domain.ControllerBases;
 using DynamicObject.Domain.Model;
-using MassTransit;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using System.Dynamic;
 using System.Text.Json;
 
 namespace DynamicObject.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DynamicObjectController : CustomBaseController
+    public class DynamicObjectController : ControllerBase
     {
-         
+
+
         private readonly IDynamicObjectService _dynamicObjectService;
 
-
-
-        public DynamicObjectController(IDynamicObjectService dynamicObjectService, ISendEndpointProvider sendEndpointProvider)
+        public DynamicObjectController(IDynamicObjectService dynamicObjectService)
         {
             _dynamicObjectService = dynamicObjectService;
-         
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(Guid id)
-        {
-            var dynamicOnject = await _dynamicObjectService.GetDynamicObjectAsync(id);
-            return Ok(dynamicOnject);
-        }
 
-        
-        [HttpPost()]
-        public async Task<IActionResult> Create(ObjectCreatedEvent dynamicObjectModel)
+        [HttpPost]
+        public async Task<IActionResult> Create(JsonElement entity)
         {
             try
             {
+               
+                if (entity.ValueKind == JsonValueKind.Undefined || entity.ValueKind != JsonValueKind.Object)
+                {
+                    return BadRequest("Entity cannot be null or undefined.");
+                }
 
-                var createdDynamicObject = await _dynamicObjectService.CreateDynamicObjectAsync(dynamicObjectModel);
 
-                return CreateActionResultInstance(createdDynamicObject);
-              
+                if (entity.TryGetProperty("entityType", out var entityTypeProperty))
+                {
+                    string entityType = entityTypeProperty.GetString();
+
+
+                    // Entity'nin türünü kontrol et
+                    if (entityType == "Product")
+                    {
+                        var product = JsonSerializer.Deserialize<Product>(entity.GetRawText(), new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true 
+                        });
+                        if (product != null)
+                        {
+                        
+                            var productJson = JsonSerializer.Serialize(product);
+                            using (var document = JsonDocument.Parse(productJson))
+                            {
+                                JsonElement productElement = document.RootElement;
+                                await _dynamicObjectService.ProductHandleAsync(productElement);
+                            }
+                        }
+                        else
+                        {
+                            throw new ArgumentException("Invalid Product data");
+                        }
+                    }
+                    else if (entityType == "Customer")
+                    {
+                        var customer = JsonSerializer.Deserialize<Customer>(entity.GetRawText(), new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+                        if (customer != null)
+                        {
+                            var customerJson = JsonSerializer.Serialize(customer);
+                            using (var document = JsonDocument.Parse(customerJson))
+                            {
+                                JsonElement customerElement = document.RootElement;
+                                await _dynamicObjectService.CustomerHandleAsync(customerElement);
+                            }
+                        }
+                        else
+                        {
+                            throw new ArgumentException("Invalid Product data");
+                        }
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Invalid entity type");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Entity type not specified");
+                }
+
+                return Ok("Entity created successfully");
+            }
+            catch (ArgumentException argEx)
+            {
+                return BadRequest(argEx.Message);
             }
             catch (Exception ex)
             {
-
-                return StatusCode(500, $"Error occurred while creating dynamic object: {ex.Message}");
+                return StatusCode(500, $"Error occurred while creating entity: {ex.Message}");
             }
-           
         }
 
-        [HttpPut("update/{id}")]
-        public async Task<IActionResult> Update(Guid id,DynamicObjectModel dynamicObjectModel)
-        {
-           await _dynamicObjectService.UpdateDynamicObjectAsync(id, dynamicObjectModel);
-           return NoContent();
-        }
 
-        [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            await _dynamicObjectService.DeleteDynamicObjectAsync(id);
-            return NoContent();
-        }
+
+
     }
 }

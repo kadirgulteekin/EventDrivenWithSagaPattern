@@ -4,6 +4,7 @@ using DynamicObject.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DynamicObject.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241001182634_Reflection")]
+    partial class Reflection
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,6 +92,27 @@ namespace DynamicObject.Infrastructure.Migrations
                     b.ToTable("CustomerOrders");
                 });
 
+            modelBuilder.Entity("DynamicObject.Domain.Model.DynamicObjectModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ObjectDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ObjectType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DynamicObjectModels");
+                });
+
             modelBuilder.Entity("DynamicObject.Domain.Model.ObjectData", b =>
                 {
                     b.Property<int>("Id")
@@ -107,7 +131,7 @@ namespace DynamicObject.Infrastructure.Migrations
 
                     b.HasIndex("ObjectFieldId");
 
-                    b.ToTable("ObjectData");
+                    b.ToTable("ObjectDatas");
                 });
 
             modelBuilder.Entity("DynamicObject.Domain.Model.ObjectField", b =>
@@ -135,7 +159,9 @@ namespace DynamicObject.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ObjectField");
+                    b.HasIndex("DynamicObjectModelId");
+
+                    b.ToTable("ObjectFields");
                 });
 
             modelBuilder.Entity("DynamicObject.Domain.Model.Product", b =>
@@ -181,7 +207,7 @@ namespace DynamicObject.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductDetails");
+                    b.ToTable("ProductDetail");
                 });
 
             modelBuilder.Entity("DynamicObject.Domain.Model.ProductImage", b =>
@@ -202,7 +228,7 @@ namespace DynamicObject.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages");
+                    b.ToTable("ProductImage");
                 });
 
             modelBuilder.Entity("DynamicObject.Domain.Model.CustomerAddress", b =>
@@ -236,6 +262,15 @@ namespace DynamicObject.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("DynamicObject.Domain.Model.ObjectField", b =>
+                {
+                    b.HasOne("DynamicObject.Domain.Model.DynamicObjectModel", null)
+                        .WithMany("ObjectFields")
+                        .HasForeignKey("DynamicObjectModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DynamicObject.Domain.Model.ProductDetail", b =>
                 {
                     b.HasOne("DynamicObject.Domain.Model.Product", "Product")
@@ -263,6 +298,11 @@ namespace DynamicObject.Infrastructure.Migrations
                     b.Navigation("Addresses");
 
                     b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("DynamicObject.Domain.Model.DynamicObjectModel", b =>
+                {
+                    b.Navigation("ObjectFields");
                 });
 
             modelBuilder.Entity("DynamicObject.Domain.Model.ObjectField", b =>

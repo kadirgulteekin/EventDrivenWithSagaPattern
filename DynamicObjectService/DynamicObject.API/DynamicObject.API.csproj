@@ -27,4 +27,8 @@
     <ProjectReference Include="..\DynamicObject.Infrastructure\DynamicObject.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Repositories\" />
+  </ItemGroup>
+
 </Project>
